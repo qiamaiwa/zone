@@ -1,6 +1,7 @@
 package com.example.zone.service;
 
 import com.example.zone.dao.DiscussPostMapper;
+import com.example.zone.entity.Comment;
 import com.example.zone.entity.DiscussPost;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ public class DiscussPostService {
 
     @Autowired
     private DiscussPostMapper discussPostMapper;
+
 
 
     public List<DiscussPost> findDiscussPosts(int userId, int offset, int limit) {
@@ -31,21 +33,17 @@ public class DiscussPostService {
         // 转义HTML标记
         post.setTitle(HtmlUtils.htmlEscape(post.getTitle()));
         post.setContent(HtmlUtils.htmlEscape(post.getContent()));
-        // 过滤敏感词
+
 
         return discussPostMapper.insertDiscussPost(post);
     }
-
-
 
     public DiscussPost findDiscussPostById(int id) {
         return discussPostMapper.selectDiscussPostById(id);
     }
 
-
-
-
-
-
+    public int updateCommentCount(int id, int commentCount) {
+        return discussPostMapper.updateCommentCount(id, commentCount);
+    }
 
 }

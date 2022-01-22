@@ -28,10 +28,10 @@ public class DiscussPostController implements ZoneConstant {
     private DiscussPostService discussPostService;
 
     @Autowired
-    private  UserService userService;
+    private HostHolder hostHolder;
 
     @Autowired
-    private HostHolder hostHolder;
+    private UserService userService;
 
     @Autowired
     private CommentService commentService;
@@ -54,20 +54,6 @@ public class DiscussPostController implements ZoneConstant {
         // 报错的情况,将来统一处理.
         return ZoneUtil.getJSONString(0, "发布成功!");
     }
-
-
-//  未加评论
-//    @RequestMapping(path = "/detail/{discussPostId}", method = RequestMethod.GET)
-//    public String getDiscussPost(@PathVariable("discussPostId") int discussPostId, Model model) {
-//        // 帖子
-//        DiscussPost post = discussPostService.findDiscussPostById(discussPostId);
-//        model.addAttribute("post", post);
-//        // 作者
-//        User user = userService.findUserById(post.getUserId());
-//        model.addAttribute("user", user);
-//
-//        return "site/discuss-detail";
-//    }
 
     @RequestMapping(path = "/detail/{discussPostId}", method = RequestMethod.GET)
     public String getDiscussPost(@PathVariable("discussPostId") int discussPostId, Model model, Page page) {
@@ -130,14 +116,7 @@ public class DiscussPostController implements ZoneConstant {
 
         model.addAttribute("comments", commentVoList);
 
-        return "/site/discuss-detail";
+        return "site/discuss-detail";
     }
-
-
-
-
-
-
-
 
 }

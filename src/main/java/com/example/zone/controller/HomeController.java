@@ -4,7 +4,9 @@ import com.example.zone.entity.DiscussPost;
 import com.example.zone.entity.Page;
 import com.example.zone.entity.User;
 import com.example.zone.service.DiscussPostService;
+import com.example.zone.service.LikeService;
 import com.example.zone.service.UserService;
+import com.example.zone.utils.ZoneConstant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,13 +19,17 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-public class HomeController {
+public class HomeController  implements ZoneConstant {
 
     @Autowired
     private DiscussPostService discussPostService;
 
     @Autowired
     private UserService userService;
+
+
+    @Autowired
+    private LikeService likeService;
 
     //静态分页
     @RequestMapping(path = "/indexStatic",method = RequestMethod.GET)
@@ -57,6 +63,8 @@ public class HomeController {
                 User user = userService.findUserById(post.getUserId());
                 map.put("user", user);
                 discussPosts.add(map);
+                map.put("likeCount",likeService.findEntityLikeCount(ENTITY_TYPE_POST,post.getId()));
+
             }
         }
         model.addAttribute("discussPosts", discussPosts);

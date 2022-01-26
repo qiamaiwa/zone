@@ -3,6 +3,7 @@ package com.example.zone.config;
 import com.example.zone.annotation.LoginRequired;
 import com.example.zone.controller.Interception.LoginRequiredInterceptor;
 import com.example.zone.controller.Interception.LoginTicketInterceptor;
+import com.example.zone.controller.Interception.MessageInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Controller;
@@ -17,11 +18,15 @@ public class WebMVCConfig implements WebMvcConfigurer {
     @Autowired
     private LoginRequiredInterceptor loginRequiredInterceptor;
 
+    @Autowired
+    private MessageInterceptor messageInterceptor;
+
 
     @Override
     public  void addInterceptors(InterceptorRegistry registry){
         registry.addInterceptor(loginTicketInterceptor).excludePathPatterns("/**/*.css","/**/*.png","/**/*.jpg","/**/*.jpeg");
         registry.addInterceptor(loginRequiredInterceptor).excludePathPatterns("/**/*.css","/**/*.png","/**/*.jpg","/**/*.jpeg");
+        registry.addInterceptor(messageInterceptor).excludePathPatterns("/**/*.css","/**/*.png","/**/*.jpg","/**/*.jpeg");
 
     }
 

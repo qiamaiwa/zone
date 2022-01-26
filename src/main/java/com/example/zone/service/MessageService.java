@@ -46,4 +46,29 @@ public class MessageService {
         return messageMapper.updateStatus(ids, 1);
     }
 
+
+    // 查询最新的点赞/关注/评论 系统通知
+    public Message findLatestNotice(int userId, String topic) {
+        return messageMapper.selectLatestNotice(userId, topic);
+    }
+
+    // 查询点赞/关注/评论 系统通知数量
+    public int findNoticeCount(int userId, String topic) {
+        return messageMapper.selectNoticeCount(userId, topic);
+    }
+
+    // 查询未读的点赞/关注/评论 系统通知数量
+    public int findNoticeUnreadCount(int userId, String topic) {
+        return messageMapper.selectNoticeUnreadCount(userId, topic);
+    }
+
+    public List<Message> findNotices(int userId, String topic, int offset, int limit) {
+        return messageMapper.selectNotices(userId, topic, offset, limit);
+    }
+
+
+
+
+
+
 }

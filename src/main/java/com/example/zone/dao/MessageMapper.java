@@ -4,6 +4,7 @@ import com.example.zone.entity.Message;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
+import java.util.Map;
 
 
 @Mapper
@@ -29,5 +30,22 @@ public interface MessageMapper {
 
     // 修改消息的状态
     int updateStatus(List<Integer> ids, int status);
+    //
+    //查询某个主题下最新的通知
+    Message selectLatestNotice(int userId,String topic);
+
+    //查询某个主题未读的通知数量
+    int selectNoticeCount(int userId,String topic);
+
+    //查询某个主题包含的通知数量
+    int selectNoticeUnreadCount(int userId,String topic);
+
+    //查询某个主题包含的所有通知
+    List<Message>  selectNotices(int userId,String topic,int offset,int limit);
+
+
+
+
+
 
 }

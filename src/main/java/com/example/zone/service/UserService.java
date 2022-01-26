@@ -7,20 +7,26 @@ import com.example.zone.entity.DiscussPost;
 import com.example.zone.entity.LoginTicket;
 import com.example.zone.entity.User;
 import com.example.zone.utils.MailClient;
+import com.example.zone.utils.RedisKeyUtil;
 import com.example.zone.utils.ZoneConstant;
 import com.example.zone.utils.ZoneUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.omg.PortableInterceptor.INACTIVE;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.ParameterResolutionDelegate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.lang.management.ThreadInfo;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -35,8 +41,10 @@ public class UserService  implements ZoneConstant {
     @Autowired
     private MailClient mailClient;
 
+//    @Autowired
+//    private LoginTicketMapper loginTicketMapper;
     @Autowired
-    private LoginTicketMapper loginTicketMapper;
+    private RedisTemplate redisTemplate;
 
     @Autowired
     private DiscussPostMapper discussPostMapper;
@@ -51,7 +59,16 @@ public class UserService  implements ZoneConstant {
 
 
     public User findUserById(int id) {
-        return userMapper.selectById(id);
+        //        return userMapper.selectById(id);
+
+
+        // 尝试用redis缓存用户
+        User user=getCache(id);
+        if(user==null){
+            user=initCache(id);
+        }
+        return  user;
+
     }
     public Map<String,Object> register(User user){
         Map<String,Object> map=new HashMap<>();
@@ -118,6 +135,8 @@ public class UserService  implements ZoneConstant {
             return  ACTIVATION_REPEAT;
         } else if (user.getActivationCode().equals(code)) {
             userMapper.updateStatus(userId, 1);
+            //用redis缓存用户信息（对用户做修改是需要删除缓存）
+            clearCache(userId);
             return ACTIVATION_SUCCESS;
         } else {
             return ACTIVATION_FAILURE;
@@ -166,7 +185,13 @@ public class UserService  implements ZoneConstant {
         loginTicket.setTicket(ZoneUtil.generateUUID());
         loginTicket.setStatus(0);
         loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
-        loginTicketMapper.insertLoginTicket(loginTicket);
+//        loginTicket存在mysql里
+//        loginTicketMapper.insertLoginTicket(loginTicket);
+
+        //用redis存loginTicket，会把他序列化成一个json对象
+        String redisKey= RedisKeyUtil.getTicketKey(loginTicket.getTicket());
+        redisTemplate.opsForValue().set(redisKey,loginTicket);
+
 
         map.put("ticket", loginTicket.getTicket());
         return map;
@@ -174,16 +199,27 @@ public class UserService  implements ZoneConstant {
 
     public void logout(String tikcket) {
 
-        loginTicketMapper.updateStatus(tikcket,1);
+//        loginTicketMapper.updateStatus(tikcket,1);
+        String redisKey=RedisKeyUtil.getTicketKey(tikcket);
+        LoginTicket loginTicket=(LoginTicket) redisTemplate.opsForValue().get(redisKey);
+        loginTicket.setStatus(1);
+        redisTemplate.opsForValue().set(redisKey,loginTicket);
     }
 
 
 
    public  LoginTicket findLoginTicket(String ticket){
-        return loginTicketMapper.selectByTicket(ticket);
-   }
-   public  void  updataHeader(int id,String headUrl){
-        userMapper.updateHeader(id,headUrl);
+//        return loginTicketMapper.selectByTicket(ticket);
+       String redisKey=RedisKeyUtil.getTicketKey(ticket);
+       return  (LoginTicket)redisTemplate.opsForValue().get(redisKey);
+    }
+   public  int  updataHeader(int id,String headUrl){
+
+        int rows=userMapper.updateHeader(id,headUrl);
+       //用redis缓存用户信息（对用户做修改是需要删除缓存）
+       clearCache(id);
+       return  rows;
+
    }
 
 
@@ -219,6 +255,24 @@ public class UserService  implements ZoneConstant {
         map.put("user", user);
         return map;
     }
+    //1.优先从缓存里取值
+    public User getCache(int userId){
+        String redisKey=RedisKeyUtil.getUserKey(userId);
+        return  (User) redisTemplate.opsForValue().get(redisKey);
+    }
+    //2.取不到时初始化缓存数据
+    public User initCache(int userId){
+        String redisKey=RedisKeyUtil.getUserKey(userId);
+        User user=userMapper.selectById(userId);
+        redisTemplate.opsForValue().set(redisKey,user, 60*60,TimeUnit.SECONDS);
+        return  user;
+    }
 
+    //3.数据变更时清除缓存数据
+    public void clearCache(int userId){
+        String redisKey=RedisKeyUtil.getUserKey(userId);
+        redisTemplate.delete(redisKey);
+
+    }
 
 }

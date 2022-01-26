@@ -51,4 +51,7 @@ public class CommentService implements ZoneConstant{
         return rows;
     }
 
+    public Comment findCommentById(int id) {
+        return  commentMapper.selectCommentById(id);
+    }
 }
